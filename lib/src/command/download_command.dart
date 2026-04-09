@@ -110,7 +110,8 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
     }
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final processId = body['process_id'] as String?;
+    final process = body['process'] as Map<String, dynamic>?;
+    final processId = process?['process_id'] as String?;
     if (processId == null) {
       throw Exception(
           'Lokalise async export returned no process_id. Response: '
