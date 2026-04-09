@@ -65,8 +65,20 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
       projectId: projectId,
       includeTags: includeTags,
     );
-    _logger.fine(response.typedBody);
-    return response.typedBody.bundleUrl;
+    if (!response.wasSuccessful) {
+      throw Exception(
+          'Lokalise API error (${response.innerResponse.statusCode}): '
+          '${response.innerResponse.body}');
+    }
+    final body = response.typedBody;
+    _logger.fine(body);
+    final bundleUrl = body.bundleUrl;
+    if (bundleUrl == null) {
+      throw Exception(
+          'Lokalise API returned no bundle_url. Response: '
+          '${response.innerResponse.body}');
+    }
+    return bundleUrl;
   }
 
   void _convertArchiveToArbFiles(Archive archive, String output) {

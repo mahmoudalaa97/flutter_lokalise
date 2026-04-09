@@ -8,7 +8,7 @@ part 'files_download_response_body.g.dart';
 class FilesDownloadResponseBody with _$FilesDownloadResponseBody {
   factory FilesDownloadResponseBody({
     @JsonKey(name: "project_id") String? projectId,
-    @JsonKey(name: "bundle_url") required String bundleUrl,
+    @JsonKey(name: "bundle_url") String? bundleUrl,
   }) = _FilesDownloadResponseBody;
 
   factory FilesDownloadResponseBody.fromJson(Map<String, dynamic> json) =>

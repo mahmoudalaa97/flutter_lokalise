@@ -5,7 +5,7 @@ description: >
 homepage: https://github.com/meniga/flutter_lokalise
 
 environment:
-  sdk: ">=2.12.0 <3.0.0"
+  sdk: ">=2.12.0 <4.0.0"
 
 executables:
   flutter_lokalise:

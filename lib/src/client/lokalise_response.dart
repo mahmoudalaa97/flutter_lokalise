@@ -14,7 +14,7 @@ class LokaliseResponse<T> {
       _fromJson(json.decode(innerResponse.body) as Map<String, dynamic>);
 
   bool get wasSuccessful =>
-      200 >= innerResponse.statusCode && innerResponse.statusCode < 300;
+      innerResponse.statusCode >= 200 && innerResponse.statusCode < 300;
 
   factory LokaliseResponse.from(Response response, FromJson<T> fromJson) =>
       LokaliseResponse<T>(response, fromJson);

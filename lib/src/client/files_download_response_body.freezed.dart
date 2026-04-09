@@ -23,7 +23,7 @@ class _$FilesDownloadResponseBodyTearOff {
 
   _FilesDownloadResponseBody call(
       {@JsonKey(name: "project_id") String? projectId,
-      @JsonKey(name: "bundle_url") required String bundleUrl}) {
+      @JsonKey(name: "bundle_url") String? bundleUrl}) {
     return _FilesDownloadResponseBody(
       projectId: projectId,
       bundleUrl: bundleUrl,
@@ -43,7 +43,7 @@ mixin _$FilesDownloadResponseBody {
   @JsonKey(name: "project_id")
   String? get projectId => throw _privateConstructorUsedError;
   @JsonKey(name: "bundle_url")
-  String get bundleUrl => throw _privateConstructorUsedError;
+  String? get bundleUrl => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
   @JsonKey(ignore: true)
@@ -58,7 +58,7 @@ abstract class $FilesDownloadResponseBodyCopyWith<$Res> {
       _$FilesDownloadResponseBodyCopyWithImpl<$Res>;
   $Res call(
       {@JsonKey(name: "project_id") String? projectId,
-      @JsonKey(name: "bundle_url") String bundleUrl});
+      @JsonKey(name: "bundle_url") String? bundleUrl});
 }
 
 /// @nodoc
@@ -83,7 +83,7 @@ class _$FilesDownloadResponseBodyCopyWithImpl<$Res>
       bundleUrl: bundleUrl == freezed
           ? _value.bundleUrl
           : bundleUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -97,7 +97,7 @@ abstract class _$FilesDownloadResponseBodyCopyWith<$Res>
   @override
   $Res call(
       {@JsonKey(name: "project_id") String? projectId,
-      @JsonKey(name: "bundle_url") String bundleUrl});
+      @JsonKey(name: "bundle_url") String? bundleUrl});
 }
 
 /// @nodoc
@@ -125,7 +125,7 @@ class __$FilesDownloadResponseBodyCopyWithImpl<$Res>
       bundleUrl: bundleUrl == freezed
           ? _value.bundleUrl
           : bundleUrl // ignore: cast_nullable_to_non_nullable
-              as String,
+              as String?,
     ));
   }
 }
@@ -135,7 +135,7 @@ class __$FilesDownloadResponseBodyCopyWithImpl<$Res>
 class _$_FilesDownloadResponseBody implements _FilesDownloadResponseBody {
   _$_FilesDownloadResponseBody(
       {@JsonKey(name: "project_id") this.projectId,
-      @JsonKey(name: "bundle_url") required this.bundleUrl});
+      @JsonKey(name: "bundle_url") this.bundleUrl});
 
   factory _$_FilesDownloadResponseBody.fromJson(Map<String, dynamic> json) =>
       _$_$_FilesDownloadResponseBodyFromJson(json);
@@ -145,7 +145,7 @@ class _$_FilesDownloadResponseBody implements _FilesDownloadResponseBody {
   final String? projectId;
   @override
   @JsonKey(name: "bundle_url")
-  final String bundleUrl;
+  final String? bundleUrl;
 
   @override
   String toString() {
@@ -186,7 +186,7 @@ class _$_FilesDownloadResponseBody implements _FilesDownloadResponseBody {
 abstract class _FilesDownloadResponseBody implements FilesDownloadResponseBody {
   factory _FilesDownloadResponseBody(
           {@JsonKey(name: "project_id") String? projectId,
-          @JsonKey(name: "bundle_url") required String bundleUrl}) =
+          @JsonKey(name: "bundle_url") String? bundleUrl}) =
       _$_FilesDownloadResponseBody;
 
   factory _FilesDownloadResponseBody.fromJson(Map<String, dynamic> json) =
@@ -197,7 +197,7 @@ abstract class _FilesDownloadResponseBody implements FilesDownloadResponseBody {
   String? get projectId => throw _privateConstructorUsedError;
   @override
   @JsonKey(name: "bundle_url")
-  String get bundleUrl => throw _privateConstructorUsedError;
+  String? get bundleUrl => throw _privateConstructorUsedError;
   @override
   @JsonKey(ignore: true)
   _$FilesDownloadResponseBodyCopyWith<_FilesDownloadResponseBody>
