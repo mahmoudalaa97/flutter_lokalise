@@ -48,9 +48,12 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
       includeTags: downloadArgResults.includeTags!,
     );
 
+    print('Downloading bundle...');
     final bundleData = await _downloader.download(bundleUrl);
+    print('Extracting and converting to ARB files...');
     final archive = ZipDecoder().decodeBytes(bundleData);
     _convertArchiveToArbFiles(archive, downloadArgResults.output!);
+    print('Done! ARB files saved to ${downloadArgResults.output!}');
   }
 
   Future<String> _fetchBundleUrl({
@@ -63,34 +66,12 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
       baseUrl: _baseUrl,
     );
 
-    final response = await client.download(
+    print('Using async export endpoint...');
+    return _fetchBundleUrlAsync(
+      client: client,
       projectId: projectId,
       includeTags: includeTags,
     );
-
-    if (response.innerResponse.statusCode == 413) {
-      _logger.info('Project too large for sync export, using async export...');
-      return _fetchBundleUrlAsync(
-        client: client,
-        projectId: projectId,
-        includeTags: includeTags,
-      );
-    }
-
-    if (!response.wasSuccessful) {
-      throw Exception(
-          'Lokalise API error (${response.innerResponse.statusCode}): '
-          '${response.innerResponse.body}');
-    }
-    final body = response.typedBody;
-    _logger.fine(body);
-    final bundleUrl = body.bundleUrl;
-    if (bundleUrl == null) {
-      throw Exception(
-          'Lokalise API returned no bundle_url. Response: '
-          '${response.innerResponse.body}');
-    }
-    return bundleUrl;
   }
 
   Future<String> _fetchBundleUrlAsync({
@@ -104,21 +85,18 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
     );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-          'Lokalise async export error (${response.statusCode}): '
+      throw Exception('Lokalise async export error (${response.statusCode}): '
           '${response.body}');
     }
 
     final body = jsonDecode(response.body) as Map<String, dynamic>;
-    final process = body['process'] as Map<String, dynamic>?;
-    final processId = process?['process_id'] as String?;
+    final processId = body['process_id'] as String?;
     if (processId == null) {
-      throw Exception(
-          'Lokalise async export returned no process_id. Response: '
+      throw Exception('Lokalise async export returned no process_id. Response: '
           '${response.body}');
     }
 
-    _logger.info('Async export started (process: $processId). Polling...');
+    print('Async export started (process: $processId). Polling...');
     return _pollForBundleUrl(
       client: client,
       projectId: projectId,
@@ -132,7 +110,7 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
     required String processId,
   }) async {
     const maxAttempts = 60;
-    const pollInterval = Duration(seconds: 3);
+    const pollInterval = Duration(seconds: 2);
 
     for (var attempt = 0; attempt < maxAttempts; attempt++) {
       await Future.delayed(pollInterval);
@@ -152,17 +130,18 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
       final process = body['process'] as Map<String, dynamic>?;
       final status = process?['status'] as String?;
 
-      _logger.fine('Process status: $status (attempt ${attempt + 1})');
+      print('Process status: $status (attempt ${attempt + 1}/${maxAttempts})');
 
       if (status == 'finished') {
-        final detail = process?['detail'] as Map<String, dynamic>?;
-        final bundleUrl = detail?['bundle_url'] as String?;
-        if (bundleUrl == null) {
+        print('Export finished!');
+        final details = process?['details'] as Map<String, dynamic>?;
+        final downloadUrl = details?['download_url'] as String?;
+        if (downloadUrl == null) {
           throw Exception(
-              'Lokalise async export finished but no bundle_url in response: '
+              'Lokalise async export finished but no download URL in response: '
               '${response.body}');
         }
-        return bundleUrl;
+        return downloadUrl;
       } else if (status == 'failed' || status == 'cancelled') {
         final message = process?['message'] as String? ?? 'unknown error';
         throw Exception('Lokalise async export $status: $message');
