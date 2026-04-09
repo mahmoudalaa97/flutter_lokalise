@@ -58,13 +58,25 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
     required String projectId,
     required Iterable<String> includeTags,
   }) async {
-    final response = await LokaliseClient(
+    final client = LokaliseClient(
       apiToken: apiToken,
       baseUrl: _baseUrl,
-    ).download(
+    );
+
+    final response = await client.download(
       projectId: projectId,
       includeTags: includeTags,
     );
+
+    if (response.innerResponse.statusCode == 413) {
+      _logger.info('Project too large for sync export, using async export...');
+      return _fetchBundleUrlAsync(
+        client: client,
+        projectId: projectId,
+        includeTags: includeTags,
+      );
+    }
+
     if (!response.wasSuccessful) {
       throw Exception(
           'Lokalise API error (${response.innerResponse.statusCode}): '
@@ -79,6 +91,85 @@ class DownloadCommand extends FlutterLokaliseCommand<Null> {
           '${response.innerResponse.body}');
     }
     return bundleUrl;
+  }
+
+  Future<String> _fetchBundleUrlAsync({
+    required LokaliseClient client,
+    required String projectId,
+    required Iterable<String> includeTags,
+  }) async {
+    final response = await client.asyncDownload(
+      projectId: projectId,
+      includeTags: includeTags,
+    );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+          'Lokalise async export error (${response.statusCode}): '
+          '${response.body}');
+    }
+
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+    final processId = body['process_id'] as String?;
+    if (processId == null) {
+      throw Exception(
+          'Lokalise async export returned no process_id. Response: '
+          '${response.body}');
+    }
+
+    _logger.info('Async export started (process: $processId). Polling...');
+    return _pollForBundleUrl(
+      client: client,
+      projectId: projectId,
+      processId: processId,
+    );
+  }
+
+  Future<String> _pollForBundleUrl({
+    required LokaliseClient client,
+    required String projectId,
+    required String processId,
+  }) async {
+    const maxAttempts = 60;
+    const pollInterval = Duration(seconds: 3);
+
+    for (var attempt = 0; attempt < maxAttempts; attempt++) {
+      await Future.delayed(pollInterval);
+
+      final response = await client.getProcess(
+        projectId: projectId,
+        processId: processId,
+      );
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception(
+            'Lokalise process status error (${response.statusCode}): '
+            '${response.body}');
+      }
+
+      final body = jsonDecode(response.body) as Map<String, dynamic>;
+      final process = body['process'] as Map<String, dynamic>?;
+      final status = process?['status'] as String?;
+
+      _logger.fine('Process status: $status (attempt ${attempt + 1})');
+
+      if (status == 'finished') {
+        final detail = process?['detail'] as Map<String, dynamic>?;
+        final bundleUrl = detail?['bundle_url'] as String?;
+        if (bundleUrl == null) {
+          throw Exception(
+              'Lokalise async export finished but no bundle_url in response: '
+              '${response.body}');
+        }
+        return bundleUrl;
+      } else if (status == 'failed' || status == 'cancelled') {
+        final message = process?['message'] as String? ?? 'unknown error';
+        throw Exception('Lokalise async export $status: $message');
+      }
+    }
+
+    throw Exception(
+        'Lokalise async export timed out after ${maxAttempts * pollInterval.inSeconds} seconds');
   }
 
   void _convertArchiveToArbFiles(Archive archive, String output) {
